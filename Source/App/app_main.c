@@ -365,6 +365,11 @@ static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_con
     }
 
     process_input_buffer(c);
+    if (c->exit_cond_input == APP_ExitConditionError) {
+        c->exit_cond = APP_ExitConditionError;
+        c->active = false;
+        return;
+    }
     process_output_recon_buffer(c);
     process_output_stream_buffer(c, enc_app, &enc_context->total_frames);
 
@@ -406,8 +411,6 @@ static void enc_channel_start(EncChannel* c) {
 }
 
 static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
-    EbErrorType return_error = EB_ErrorNone;
-
     EncPass enc_pass = enc_context->enc_pass;
     // Start the Encoder
     enc_channel_start(&enc_context->channel);
@@ -419,7 +422,7 @@ static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
     }
     print_summary(enc_context);
     print_performance(enc_context);
-    return return_error;
+    return enc_context->channel.return_error;
 }
 
 EbErrorType enc_app_ctor(EncApp* enc_app) {

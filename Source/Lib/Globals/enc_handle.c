@@ -5333,9 +5333,17 @@ EB_API EbErrorType svt_av1_enc_set_parameter(EbComponentType*          svt_enc_c
     SequenceControlSet* scs        = enc_handle->scs_instance->scs;
     uint16_t*           fgs_seeds  = NULL;
     if (config_struct->fgs_seed_count) {
-        if (!config_struct->fgs_seeds || (size_t)config_struct->fgs_seed_count > SIZE_MAX / sizeof(*fgs_seeds)) {
+        if (!config_struct->fgs_seeds) {
             return EB_ErrorBadParameter;
         }
+#if SIZE_MAX <= UINT32_MAX
+        // fgs_seed_count is uint32_t; overflow is only possible when
+        // size_t is 32-bit. On 64-bit this comparison is a constant false
+        // and GCC -Werror=type-limits rejects an otherwise valid build.
+        if ((size_t)config_struct->fgs_seed_count > SIZE_MAX / sizeof(*fgs_seeds)) {
+            return EB_ErrorBadParameter;
+        }
+#endif
         for (uint32_t i = 0; i < config_struct->fgs_seed_count; ++i) {
             if (!config_struct->fgs_seeds[i]) {
                 return EB_ErrorBadParameter;
